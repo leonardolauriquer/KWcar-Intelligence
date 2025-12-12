@@ -5,6 +5,7 @@ import { getCnpjData } from '../services/brasilApiService';
 import { getCondutorDenatran } from '../services/denatranService';
 import { getCpfInfosimples, getCnpjInfosimples, getVeiculosPorProprietario } from '../services/infosimplesService';
 import { PersonProfile } from '../types';
+import { addToHistory } from '../services/historyService';
 
 const PersonQuery: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'cnpj' | 'cpf'>('cnpj');
@@ -60,7 +61,7 @@ const PersonQuery: React.FC = () => {
           const infoData = await getCnpjInfosimples(cleanQuery);
           if (infoData.data) {
              const d = infoData.data;
-             setData({
+             const profile: PersonProfile = {
                name: d.razao_social || d.nome_empresarial,
                cpf: d.cnpj,
                status: d.situacao_cadastral,
@@ -75,7 +76,16 @@ const PersonQuery: React.FC = () => {
                },
                partners: d.qsa?.map((s: any) => s.nome_socio),
                source: 'Infosimples'
+             };
+             setData(profile);
+             
+             addToHistory({
+                 type: 'COMPANY',
+                 title: profile.name,
+                 subtitle: `CNPJ: ${profile.cpf}`,
+                 status: 'success'
              });
+             
              return;
           }
         } catch (infoError) {
@@ -84,7 +94,7 @@ const PersonQuery: React.FC = () => {
 
         // 2. Fallback BrasilAPI
         const cnpjData = await getCnpjData(cleanQuery);
-        setData({
+        const profile: PersonProfile = {
           name: cnpjData.nome_fantasia || cnpjData.razao_social,
           cpf: cnpjData.cnpj,
           status: cnpjData.descricao_situacao_cadastral === 'ATIVA' ? 'Ativa' : 'Suspenso',
@@ -99,6 +109,14 @@ const PersonQuery: React.FC = () => {
           },
           partners: cnpjData.qsa?.map(q => q.nome_socio) || [],
           source: 'BrasilAPI'
+        };
+        setData(profile);
+        
+        addToHistory({
+             type: 'COMPANY',
+             title: profile.name,
+             subtitle: `CNPJ: ${profile.cpf}`,
+             status: 'success'
         });
 
       } else {
@@ -115,7 +133,7 @@ const PersonQuery: React.FC = () => {
           
           if (infoCpf && infoCpf.data) {
             const d = infoCpf.data;
-            setData({
+            const profile: PersonProfile = {
                name: d.nome,
                cpf: d.cpf,
                status: d.situacao_cadastral,
@@ -123,7 +141,16 @@ const PersonQuery: React.FC = () => {
                vehicles: vehiclesFound, // Veículos reais vindos do Detran
                notes: `Data Nascimento: ${d.data_nascimento}\nOrigem: Receita Federal\nProtocolo: ${infoCpf.header.client}`,
                source: 'Infosimples'
+            };
+            setData(profile);
+            
+            addToHistory({
+                 type: 'PERSON',
+                 title: profile.name,
+                 subtitle: `CPF: ${profile.cpf}`,
+                 status: 'success'
             });
+
             return;
           }
         } catch (e: any) {
@@ -138,16 +165,25 @@ const PersonQuery: React.FC = () => {
         try {
            const denatranData = await getCondutorDenatran(cleanQuery);
            if (denatranData) {
-             setData({
+             const profile: PersonProfile = {
                name: denatranData.nome,
                cpf: denatranData.cpf,
-               status: denatranData.statusCnh || 'Regular',
+               status: (denatranData.statusCnh as PersonProfile['status']) || 'Regular',
                score: 950,
                vehicles: vehiclesFound.length > 0 ? vehiclesFound : [],
                notes: `Registro CNH: ${denatranData.registroCnh}\nCategoria: ${denatranData.categoria}`,
                cnhData: denatranData,
                source: 'Denatran'
+             };
+             setData(profile);
+             
+             addToHistory({
+                 type: 'PERSON',
+                 title: profile.name,
+                 subtitle: `CPF: ${profile.cpf}`,
+                 status: 'success'
              });
+
              return;
            }
         } catch (denatranError) {
@@ -158,10 +194,22 @@ const PersonQuery: React.FC = () => {
         const result = await generatePersonProfile(query);
         const finalVehicles = vehiclesFound.length > 0 ? vehiclesFound : result.vehicles;
         
-        setData({ 
-            ...result, 
+        const profile: PersonProfile = { 
+            name: result.name,
+            cpf: result.cpf,
+            status: result.status as PersonProfile['status'],
+            score: result.score,
             vehicles: finalVehicles,
+            notes: result.notes,
             source: 'IA' 
+        };
+        setData(profile);
+        
+        addToHistory({
+             type: 'PERSON',
+             title: profile.name,
+             subtitle: `CPF: ${profile.cpf} (IA)`,
+             status: 'success'
         });
       }
 

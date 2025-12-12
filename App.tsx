@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import PersonQuery from './pages/PersonQuery';
 import VehicleQuery from './pages/VehicleQuery';
+import VehicleCompare from './pages/VehicleCompare'; // Import
 import Utilities from './pages/Utilities';
 import Scanner from './pages/Scanner';
 import Login from './pages/Login';
@@ -54,6 +55,7 @@ const App: React.FC = () => {
                 <Route path="/services" element={<Services />} />
                 <Route path="/person" element={<PersonQuery />} />
                 <Route path="/vehicle" element={<VehicleQuery />} />
+                <Route path="/compare" element={<VehicleCompare />} />
                 <Route path="/utilities" element={<Utilities />} />
                 <Route path="/scanner" element={<Scanner />} />
                 <Route path="/settings" element={<Settings />} />

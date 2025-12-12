@@ -13,8 +13,13 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Activity,
-  CreditCard
+  CreditCard,
+  Clock,
+  History,
+  Building2,
+  Swords
 } from 'lucide-react';
+import { getHistory, HistoryItem } from '../services/historyService';
 
 // Definição dos Aplicativos/Módulos do Sistema
 interface AppItem {
@@ -50,6 +55,16 @@ const SYSTEM_APPS: AppItem[] = [
     popular: true
   },
   {
+    id: 'vehicle_compare',
+    title: 'Modo Batalha',
+    description: 'Comparativo técnico e mercadológico IA.',
+    icon: Swords,
+    path: '/compare',
+    gradient: 'from-red-500 to-orange-500',
+    textColor: 'text-red-600',
+    popular: true
+  },
+  {
     id: 'scanner_ai',
     title: 'Vision AI Scanner',
     description: 'Diagnóstico visual e OCR via Inteligência Artificial.',
@@ -64,7 +79,7 @@ const SYSTEM_APPS: AppItem[] = [
     description: 'Valuation histórico e tendências.',
     icon: Activity,
     path: '/vehicle',
-    gradient: 'from-orange-400 to-red-500',
+    gradient: 'from-orange-400 to-amber-500',
     textColor: 'text-orange-600'
   },
   {
@@ -93,16 +108,6 @@ const SYSTEM_APPS: AppItem[] = [
     path: '/services',
     gradient: 'from-violet-500 to-fuchsia-600',
     textColor: 'text-violet-600'
-  },
-  {
-    id: 'cnh_status',
-    title: 'Validador CNH',
-    description: 'Análise de condutor e bloqueios ativos.',
-    icon: ShieldCheck,
-    path: '/person',
-    gradient: 'from-red-500 to-red-700',
-    textColor: 'text-red-600',
-    popular: true
   }
 ];
 
@@ -170,15 +175,21 @@ const Dashboard: React.FC = () => {
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('kw_user_favorites');
-      return saved ? JSON.parse(saved) : ['consult_cpf', 'consult_vehicle'];
+      return saved ? JSON.parse(saved) : ['consult_cpf', 'consult_vehicle', 'vehicle_compare'];
     } catch {
       return ['consult_cpf', 'consult_vehicle'];
     }
   });
+  
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
     localStorage.setItem('kw_user_favorites', JSON.stringify(favorites));
   }, [favorites]);
+
+  useEffect(() => {
+    setHistory(getHistory());
+  }, []);
 
   const toggleFavorite = (e: React.MouseEvent, appId: string) => {
     e.stopPropagation(); 
@@ -198,6 +209,17 @@ const Dashboard: React.FC = () => {
     if (hour < 18) return 'Boa tarde';
     return 'Boa noite';
   };
+
+  const getHistoryIcon = (type: string) => {
+    if (type === 'VEHICLE') return <Car size={16} />;
+    if (type === 'COMPANY') return <Building2 size={16} />;
+    return <Users size={16} />;
+  }
+
+  const formatTime = (ts: number) => {
+    const date = new Date(ts);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
 
   return (
     <div className="space-y-12 animate-fade-in-up pb-10 font-sans">
@@ -227,55 +249,99 @@ const Dashboard: React.FC = () => {
                <button className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur text-sm font-bold transition-all">
                   Relatórios
                </button>
-               <button className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 text-sm font-bold shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
+               <button onClick={() => navigate('/vehicle')} className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 text-sm font-bold shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
                   <Search size={16} /> Nova Consulta
                </button>
             </div>
          </div>
       </div>
 
-      {/* Seção Favoritos (Grid Bento Style) */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-mono uppercase tracking-wider">
-          <Star className="text-yellow-500" size={20} /> Acesso Rápido
-        </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {favoriteApps.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {favoriteApps.map(app => (
-              <AppCard 
-                key={app.id} 
-                app={app} 
-                isFav={true}
-                onToggleFav={toggleFavorite}
-                onNavigate={(path) => navigate(path)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="border-2 border-dashed border-slate-300/60 rounded-3xl p-10 text-center bg-slate-50/50">
-            <p className="text-slate-400 font-medium">Configure seu workspace.</p>
-            <p className="text-slate-400 text-sm mt-1">Favorite apps para acesso imediato.</p>
-          </div>
-        )}
-      </div>
+        {/* Coluna Principal: Favoritos e Destaques */}
+        <div className="lg:col-span-2 space-y-10">
+            {/* Seção Favoritos (Grid Bento Style) */}
+            <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-mono uppercase tracking-wider">
+                <Star className="text-yellow-500" size={20} /> Acesso Rápido
+                </h2>
+                
+                {favoriteApps.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {favoriteApps.map(app => (
+                    <AppCard 
+                        key={app.id} 
+                        app={app} 
+                        isFav={true}
+                        onToggleFav={toggleFavorite}
+                        onNavigate={(path) => navigate(path)}
+                    />
+                    ))}
+                </div>
+                ) : (
+                <div className="border-2 border-dashed border-slate-300/60 rounded-3xl p-10 text-center bg-slate-50/50">
+                    <p className="text-slate-400 font-medium">Configure seu workspace.</p>
+                    <p className="text-slate-400 text-sm mt-1">Favorite apps para acesso imediato.</p>
+                </div>
+                )}
+            </div>
 
-      {/* Seção Inteligência (Destaques) */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-mono uppercase tracking-wider">
-          <Activity className="text-blue-600" size={20} /> Inteligência Ativa
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularApps.map(app => (
-            <AppCard 
-                key={app.id} 
-                app={app} 
-                isFav={favorites.includes(app.id)}
-                onToggleFav={toggleFavorite}
-                onNavigate={(path) => navigate(path)}
-            />
-          ))}
+             {/* Seção Inteligência (Destaques) */}
+            <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-mono uppercase tracking-wider">
+                <Activity className="text-blue-600" size={20} /> Inteligência Ativa
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {popularApps.map(app => (
+                    <AppCard 
+                        key={app.id} 
+                        app={app} 
+                        isFav={favorites.includes(app.id)}
+                        onToggleFav={toggleFavorite}
+                        onNavigate={(path) => navigate(path)}
+                    />
+                ))}
+                </div>
+            </div>
         </div>
+
+        {/* Coluna Lateral: Histórico e Utilidade */}
+        <div className="space-y-8">
+            {/* Widget Histórico */}
+            <div className="glass-card rounded-3xl border border-slate-200 overflow-hidden flex flex-col h-full max-h-[600px]">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <History size={18} className="text-slate-500" /> Atividade Recente
+                    </h3>
+                    <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono">{history.length}</span>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
+                    {history.length > 0 ? history.map((item) => (
+                        <div key={item.id} className="group p-3 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all cursor-pointer flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                item.type === 'VEHICLE' ? 'bg-blue-100 text-blue-600' : 
+                                item.type === 'COMPANY' ? 'bg-indigo-100 text-indigo-600' : 'bg-purple-100 text-purple-600'
+                            }`}>
+                                {getHistoryIcon(item.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-slate-700 text-sm truncate">{item.title}</h4>
+                                <p className="text-xs text-slate-400 truncate">{item.subtitle}</p>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                                {formatTime(item.timestamp)}
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="text-center p-8 text-slate-400 text-sm">
+                            Nenhuma consulta recente.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
       </div>
 
       {/* Todos os Apps (Compact Grid) */}

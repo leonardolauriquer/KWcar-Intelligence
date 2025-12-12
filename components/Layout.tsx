@@ -12,7 +12,8 @@ import {
   LogOut,
   Grid,
   Settings as SettingsIcon,
-  ChevronRight
+  ChevronRight,
+  Swords
 } from 'lucide-react';
 import AiAssistant from './AiAssistant';
 
@@ -30,6 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
     { name: 'Serviços API', path: '/services', icon: Grid },
     { name: 'Dossiê Pessoa', path: '/person', icon: Users },
     { name: 'Dossiê Veículo', path: '/vehicle', icon: Car },
+    { name: 'Comparativo', path: '/compare', icon: Swords }, // Added
     { name: 'Utilitários', path: '/utilities', icon: Briefcase },
     { name: 'Scanner Vision', path: '/scanner', icon: ScanLine },
     { name: 'Sistema', path: '/settings', icon: SettingsIcon },

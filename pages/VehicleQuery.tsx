@@ -6,6 +6,7 @@ import { getFipeData, isFipeCodeFormat } from '../services/brasilApiService';
 import { getVeiculoDenatran, getInfracoesDenatran } from '../services/denatranService';
 import { getVeiculoInfosimples } from '../services/infosimplesService';
 import { VehicleReport } from '../types';
+import { addToHistory } from '../services/historyService';
 
 const VehicleQuery: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -29,7 +30,7 @@ const VehicleQuery: React.FC = () => {
         const fipeDataList = await getFipeData(query);
         if (fipeDataList && fipeDataList.length > 0) {
           const latest = fipeDataList[0];
-          setReport({
+          const newReport: VehicleReport = {
             model: `${latest.marca} ${latest.modelo}`,
             year: latest.anoModelo === 32000 ? 'Zero KM' : latest.anoModelo.toString(),
             priceEstimate: latest.valor,
@@ -37,8 +38,16 @@ const VehicleQuery: React.FC = () => {
             commonIssues: ["Consulte um mecânico para avaliação específica deste modelo."],
             history: "Dados oficiais da Tabela FIPE. Valores de referência de mercado.",
             source: 'BrasilAPI'
-          });
+          };
+          setReport(newReport);
           setFipeHistory(fipeDataList);
+          
+          addToHistory({
+             type: 'VEHICLE',
+             title: latest.marca + ' ' + latest.modelo,
+             subtitle: 'FIPE: ' + latest.codigoFipe,
+             status: 'success'
+          });
         } else {
             alert("Código FIPE não encontrado.");
         }
@@ -54,7 +63,7 @@ const VehicleQuery: React.FC = () => {
                 // Ajuste de mapeamento para compatibilidade entre endpoints (Sinesp vs Senatran)
                 const modeloDesc = d.marca_modelo || `${d.marca || ''} ${d.modelo || ''}`.trim();
                 
-                setReport({
+                const newReport: VehicleReport = {
                     model: modeloDesc || 'Veículo Identificado',
                     year: d.ano_fabricacao && d.ano_modelo ? `${d.ano_fabricacao}/${d.ano_modelo}` : (d.ano || 'Ano N/A'),
                     priceEstimate: d.preco_fipe || "Consulte FIPE",
@@ -71,7 +80,16 @@ const VehicleQuery: React.FC = () => {
                     ],
                     history: `Proprietário Atual: ${d.proprietario_nome || d.nome_proprietario || 'Consultar Detalhado'}\nSituação: ${d.situacao_veiculo || 'Regular'}`,
                     source: 'Infosimples'
+                };
+                setReport(newReport);
+                
+                addToHistory({
+                    type: 'VEHICLE',
+                    title: newReport.model,
+                    subtitle: `Placa: ${cleanQuery}`,
+                    status: 'success'
                 });
+                
                 setLoading(false);
                 return;
             }
@@ -86,7 +104,7 @@ const VehicleQuery: React.FC = () => {
 
           if (denatranData) {
             // Mapeia dados reais do Denatran para o relatório
-            setReport({
+            const newReport: VehicleReport = {
               model: `${denatranData.marcaModelo}`,
               year: `${denatranData.anoFabricacao}/${denatranData.anoModelo}`,
               priceEstimate: "Consulte FIPE", // Denatran não dá preço
@@ -104,7 +122,16 @@ const VehicleQuery: React.FC = () => {
               ],
               history: `Proprietário Atual: ${denatranData.nomeProprietario}\nDocumento: ${denatranData.documentoProprietario}`,
               source: 'Denatran'
+            };
+            setReport(newReport);
+            
+            addToHistory({
+                type: 'VEHICLE',
+                title: newReport.model,
+                subtitle: `Placa: ${cleanQuery}`,
+                status: 'success'
             });
+
             setLoading(false);
             return;
           }
@@ -115,6 +142,13 @@ const VehicleQuery: React.FC = () => {
         // 3. Fallback: Simulação IA
         const result = await generateVehicleReport(query);
         setReport({ ...result, source: 'IA' });
+        
+        addToHistory({
+            type: 'VEHICLE',
+            title: result.model,
+            subtitle: `Placa: ${cleanQuery} (IA)`,
+            status: 'success'
+        });
       }
     } catch (err) {
       console.error(err);

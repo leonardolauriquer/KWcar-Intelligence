@@ -2,6 +2,7 @@
   "name": "KWcar Intelligence",
   "description": "Plataforma avançada de consulta veicular e pessoal impulsionada por IA Generativa. Realize buscas, análises de documentos e diagnósticos visuais.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone"
   ]
 }

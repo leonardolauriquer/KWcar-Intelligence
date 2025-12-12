@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Inicializa o cliente Gemini com a chave de API do ambiente
@@ -134,6 +135,47 @@ export const analyzeImage = async (base64Data: string, mimeType: string) => {
     return response.text;
   } catch (error) {
     console.error("Erro na análise de imagem:", error);
+    throw error;
+  }
+};
+
+/**
+ * Compara dois veículos (Modo Batalha).
+ */
+export const compareVehicles = async (carA: string, carB: string) => {
+  try {
+    const model = "gemini-2.5-flash";
+    const prompt = `
+      Atue como um especialista automotivo sênior.
+      Compare tecnicamente e mercadologicamente estes dois veículos:
+      A: "${carA}"
+      B: "${carB}"
+      
+      Se o usuário não especificou ano, assuma modelos recentes equivalentes.
+      
+      Retorne um JSON estrito com:
+      {
+        "carA": { "name": "Nome Completo A", "price": "Preço Médio", "specs": {"engine": "...", "power": "...", "consumption": "..."}, "pros": ["..."], "cons": ["..."] },
+        "carB": { "name": "Nome Completo B", "price": "Preço Médio", "specs": {"engine": "...", "power": "...", "consumption": "..."}, "pros": ["..."], "cons": ["..."] },
+        "verdict": {
+          "winner": "A ou B",
+          "reason": "Explicação detalhada de quem ganha e por que.",
+          "bestFor": "Para quem é o carro A? Para quem é o B?"
+        }
+      }
+    `;
+
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("Erro na comparação:", error);
     throw error;
   }
 };

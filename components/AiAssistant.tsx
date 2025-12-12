@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, X, Send, Sparkles, Bot, User, ArrowRight, Loader2, Database } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Bot, User, ArrowRight, Loader2, Database, Mic, MicOff } from 'lucide-react';
 import { createChatSession } from '../services/aiAssistantService';
 import { generatePersonProfile, generateVehicleReport } from '../services/geminiService';
 import { getCepData } from '../services/brasilApiService';
@@ -12,6 +12,14 @@ interface Message {
   text: string;
 }
 
+// Declaração global para evitar erro de TS com WebkitSpeechRecognition
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+    SpeechRecognition: any;
+  }
+}
+
 const AiAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -20,9 +28,11 @@ const AiAssistant: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [statusText, setStatusText] = useState(''); // Feedback visual de ação
+  const [isListening, setIsListening] = useState(false); // Estado do microfone
   
   const chatSessionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,20 +89,21 @@ const AiAssistant: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, overrideText?: string) => {
     if (e) e.preventDefault();
-    if (!input.trim()) return;
+    const textToSend = overrideText || input;
+    
+    if (!textToSend.trim()) return;
 
-    const userMsg = input;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
     setIsTyping(true);
     setStatusText('');
 
     try {
       const chat = chatSessionRef.current;
       
-      let result = await chat.sendMessage(userMsg);
+      let result = await chat.sendMessage(textToSend);
       let response = result.response;
       
       // Processamento de Tools (Function Calling)
@@ -142,6 +153,43 @@ const AiAssistant: React.FC = () => {
       setIsTyping(false);
       setStatusText('');
     }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      // Opcional: Auto-envio após terminar de falar
+      setTimeout(() => handleSendMessage(undefined, transcript), 500);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Erro no reconhecimento de voz", event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   return (
@@ -239,19 +287,29 @@ const AiAssistant: React.FC = () => {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-200">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ex: Consultar placa OOO-0000"
-                className="w-full bg-slate-100 text-slate-700 placeholder-slate-400 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
-              />
+          <form onSubmit={(e) => handleSendMessage(e)} className="p-3 bg-white border-t border-slate-200">
+            <div className="relative flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ex: Consultar placa OOO-0000"
+                    className="w-full bg-slate-100 text-slate-700 placeholder-slate-400 rounded-xl pl-4 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
+                />
+                <button 
+                    type="button"
+                    onClick={toggleListening}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-200'}`}
+                    title="Comando de Voz"
+                >
+                    {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                </button>
+              </div>
               <button 
                 type="submit"
                 disabled={!input.trim() || isTyping}
-                className="absolute right-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:bg-slate-300 transition-all shadow-md"
+                className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:bg-slate-300 transition-all shadow-md shrink-0"
               >
                 {isTyping ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={16} />}
               </button>
