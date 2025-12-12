@@ -8,6 +8,7 @@ import {
   Loader2, X, CheckCircle, Database
 } from 'lucide-react';
 import { executeGenericConsulta } from '../services/infosimplesService';
+import AutocompleteInput from '../components/AutocompleteInput';
 
 // --- DEFINIÇÃO DE TIPOS ---
 type InputType = 'CPF' | 'CNPJ' | 'PLACA' | 'RENAVAM' | 'PROCESSO' | 'TELEFONE' | 'CEP' | 'TEXTO' | 'GENERICO';
@@ -176,6 +177,9 @@ const SERVICE_CATALOG: ServiceDefinition[] = RAW_CATALOG.map(item => ({
   inputType: detectInputType(item.name, item.endpoint)
 }));
 
+// Lista simples de nomes para o Autocomplete
+const SERVICE_NAMES = SERVICE_CATALOG.map(s => s.name);
+
 // Categorias Únicas
 const CATEGORIES = ['Todos', ...Array.from(new Set(SERVICE_CATALOG.map(s => s.category))).sort()];
 
@@ -191,7 +195,7 @@ const Services: React.FC = () => {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
 
-  // Filtragem
+  // Filtragem (agora usa o searchTerm que pode vir do Autocomplete)
   const filteredServices = useMemo(() => {
     return SERVICE_CATALOG.filter(service => {
       const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -200,6 +204,19 @@ const Services: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [searchTerm, activeCategory]);
+
+  const handleSelectService = (serviceName: string) => {
+    setSearchTerm(serviceName);
+    // Opcional: abrir automaticamente o modal se houver apenas um match exato
+    const match = SERVICE_CATALOG.find(s => s.name === serviceName);
+    if(match) {
+        setSelectedService(match);
+        setPrimaryInput('');
+        setSecondaryInput('');
+        setResult(null);
+        setError('');
+    }
+  };
 
   const handleExecute = async () => {
     if (!selectedService || !primaryInput) return;
@@ -269,15 +286,16 @@ const Services: React.FC = () => {
           </p>
         </div>
         
-        <div className="relative w-full md:w-80">
-          <input
-            type="text"
-            placeholder="Buscar serviço (ex: antt, inpi, tj...)"
+        <div className="relative w-full md:w-96 z-20">
+          <AutocompleteInput
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all text-slate-700"
+            onChange={setSearchTerm}
+            onSelect={handleSelectService}
+            options={SERVICE_NAMES}
+            placeholder="Buscar serviço (ex: antt, inpi, tj...)"
+            className="w-full text-slate-700"
+            icon={Search}
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
         </div>
       </div>
 
@@ -329,6 +347,11 @@ const Services: React.FC = () => {
             </div>
           )
         })}
+        {filteredServices.length === 0 && (
+            <div className="col-span-3 text-center py-20 text-slate-400">
+                <p>Nenhum serviço encontrado para "{searchTerm}"</p>
+            </div>
+        )}
       </div>
 
       {/* Modal de Execução */}

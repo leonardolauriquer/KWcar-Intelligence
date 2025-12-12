@@ -17,9 +17,12 @@ import {
   Clock,
   History,
   Building2,
-  Swords
+  Swords,
+  Command
 } from 'lucide-react';
 import { getHistory, HistoryItem } from '../services/historyService';
+import AutocompleteInput from '../components/AutocompleteInput';
+import { GLOBAL_ACTIONS, getPathForAction } from '../data/appActions';
 
 // Definição dos Aplicativos/Módulos do Sistema
 interface AppItem {
@@ -172,6 +175,7 @@ const AppCard: React.FC<AppCardProps> = ({ app, isFav, onToggleFav, onNavigate }
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [globalQuery, setGlobalQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('kw_user_favorites');
@@ -196,6 +200,13 @@ const Dashboard: React.FC = () => {
     setFavorites(prev => 
       prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
     );
+  };
+
+  const handleGlobalSelect = (action: string) => {
+    setGlobalQuery(action);
+    const path = getPathForAction(action);
+    // Pequeno delay para visual
+    setTimeout(() => navigate(path), 300);
   };
 
   const favoriteApps = SYSTEM_APPS.filter(app => favorites.includes(app.id));
@@ -233,25 +244,31 @@ const Dashboard: React.FC = () => {
          <div className="absolute bottom-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 z-0 mix-blend-overlay"></div>
          
          <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-6">
-            <div>
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-bold mb-4 text-cyan-300">
+            <div className="flex-1 w-full max-w-2xl">
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-bold mb-6 text-cyan-300">
                   <Zap size={12} className="fill-cyan-300" /> SYSTEM ONLINE v2.4
                </div>
                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                  {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-white">Admin</span>
                </h1>
-               <p className="text-blue-200 text-lg max-w-xl leading-relaxed">
-                 O hub de inteligência veicular está pronto. Seus indicadores de performance estão estáveis. O que vamos analisar?
-               </p>
-            </div>
-            
-            <div className="flex gap-3">
-               <button className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur text-sm font-bold transition-all">
-                  Relatórios
-               </button>
-               <button onClick={() => navigate('/vehicle')} className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 text-sm font-bold shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
-                  <Search size={16} /> Nova Consulta
-               </button>
+               
+               {/* Global Smart Search */}
+               <div className="mt-8 relative z-20 group">
+                  <AutocompleteInput 
+                    value={globalQuery}
+                    onChange={setGlobalQuery}
+                    onSelect={handleGlobalSelect}
+                    options={GLOBAL_ACTIONS}
+                    placeholder="O que você deseja investigar hoje?"
+                    icon={Command}
+                    className="w-full text-slate-900"
+                  />
+                  <div className="mt-2 flex gap-4 text-xs text-blue-200 font-medium opacity-80 pl-4">
+                     <span>Experimente: "Consultar Placa"</span>
+                     <span>"Ver Tabela FIPE"</span>
+                     <span>"CPF"</span>
+                  </div>
+               </div>
             </div>
          </div>
       </div>
