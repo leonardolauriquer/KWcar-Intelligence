@@ -86,7 +86,8 @@ export const getCnpjInfosimples = async (cnpj: string) => {
 // --- VEÍCULOS (Mantidas para compatibilidade com VehicleQuery) ---
 
 export const getVeiculoInfosimples = async (placa: string) => {
-  return await callInfosimples('sinesp/cidadao', { 
+  // Alterado de sinesp/cidadao para senatran/veiculo devido a erro 602 (serviço inválido)
+  return await callInfosimples('senatran/veiculo', { 
     placa: placa.replace(/[^a-zA-Z0-9]/g, '') 
   });
 };

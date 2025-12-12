@@ -81,7 +81,7 @@ const RAW_CATALOG = [
   { name: "CFO / Dentistas", endpoint: "cfo/cadastro" },
   { name: "CFC / Contabilidade", endpoint: "cfc/cadastro" },
   { name: "CFP / Psicologia", endpoint: "cfp/cadastro" },
-  { name: "OAB / Cadastro Nacional (CNA)", endpoint: "cna/advogados" }, // Adicionado comum
+  { name: "OAB / Cadastro Nacional (CNA)", endpoint: "cna/advogados" }, 
   
   // TRIBUNAIS (CNJ, STJ, STF, TRTs, TJs)
   { name: "CNJ / Processos", endpoint: "cnj/processos" },
@@ -99,22 +99,21 @@ const RAW_CATALOG = [
   { name: "TJRJ / Processo", endpoint: "tribunal/tjrj/processo" },
   { name: "TJMG / Processo", endpoint: "tribunal/tjmg/processo" },
   
-  // DETRAN (VEÍCULOS & CNH) - Expandido
-  { name: "SINESP / Cidadão (Roubo/Furto)", endpoint: "sinesp/cidadao" },
+  // DETRAN (VEÍCULOS & CNH)
   { name: "DENATRAN / Veículo", endpoint: "senatran/veiculo" },
   { name: "DENATRAN / Infrações", endpoint: "senatran/infracoes" },
   { name: "DENATRAN / Condutor (CNH)", endpoint: "senatran/validar-cnh" },
   { name: "PRF / Nada Consta", endpoint: "prf/nada-consta" },
   { name: "PRF / Multas", endpoint: "prf/infracoes" },
   
-  // Detran Estaduais (Amostra principal, lista completa seria enorme)
+  // Detran Estaduais
   { name: "DETRAN SP / Veículo Completo", endpoint: "detran/sp/debitos-restricoes-veiculo" },
   { name: "DETRAN SP / Débitos", endpoint: "detran/sp/debitos" },
   { name: "DETRAN SP / Multas", endpoint: "detran/sp/multas" },
   { name: "DETRAN SP / CNH", endpoint: "detran/sp/cnh" },
   { name: "DETRAN RJ / Veículo", endpoint: "detran/rj/veiculo" },
   { name: "DETRAN RJ / Multas", endpoint: "detran/rj/multas-guias" },
-  { name: "DETRAN MG / Veículo", endpoint: "detran/mg/veic-nao-licenciado" }, // Endpoint comum para dados
+  { name: "DETRAN MG / Veículo", endpoint: "detran/mg/veic-nao-licenciado" },
   { name: "DETRAN MG / Multas", endpoint: "detran/mg/multas-extrato" },
   { name: "DETRAN PR / Veículo", endpoint: "detran/pr/veiculo-completa" },
   { name: "DETRAN RS / Veículo", endpoint: "detran/rs/veiculo" },
@@ -126,7 +125,7 @@ const RAW_CATALOG = [
   { name: "DETRAN ES / Veículo", endpoint: "detran/es/veiculo" },
   { name: "DETRAN CE / Veículo", endpoint: "detran/ce/veiculo" },
 
-  // PREFEITURAS & SEFAZ (Amostra)
+  // PREFEITURAS & SEFAZ
   { name: "Prefeitura SP / Multas", endpoint: "pref/sp/sao-paulo/multas" },
   { name: "Prefeitura SP / Dívida Ativa", endpoint: "pref/sp/sao-paulo/divida-ativa" },
   { name: "Prefeitura RJ / Multas", endpoint: "pref/rj/rio-janeiro/multas" },

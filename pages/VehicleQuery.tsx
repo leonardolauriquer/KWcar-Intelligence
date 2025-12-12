@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Loader2, Gauge, AlertTriangle, FileText, Banknote, History, ShieldAlert, Lock, CheckCircle2 } from 'lucide-react';
 import { generateVehicleReport } from '../services/geminiService';
@@ -50,22 +51,25 @@ const VehicleQuery: React.FC = () => {
             const infoData = await getVeiculoInfosimples(cleanQuery);
             if (infoData.data) {
                 const d = infoData.data;
+                // Ajuste de mapeamento para compatibilidade entre endpoints (Sinesp vs Senatran)
+                const modeloDesc = d.marca_modelo || `${d.marca || ''} ${d.modelo || ''}`.trim();
+                
                 setReport({
-                    model: `${d.marca} ${d.modelo}`,
-                    year: `${d.ano_fabricacao}/${d.ano_modelo}`,
+                    model: modeloDesc || 'Veículo Identificado',
+                    year: d.ano_fabricacao && d.ano_modelo ? `${d.ano_fabricacao}/${d.ano_modelo}` : (d.ano || 'Ano N/A'),
                     priceEstimate: d.preco_fipe || "Consulte FIPE",
                     specs: [
-                        `Cor: ${d.cor}`,
-                        `Combustível: ${d.combustivel}`,
-                        `Município: ${d.municipio}-${d.uf}`,
-                        `Chassi: ${d.chassi}`,
-                        `Renavam: ${d.renavam}`
+                        `Cor: ${d.cor || 'N/A'}`,
+                        `Combustível: ${d.combustivel || 'N/A'}`,
+                        `Município: ${d.municipio && d.uf ? `${d.municipio}-${d.uf}` : 'N/A'}`,
+                        `Chassi: ${d.chassi || '***'}`,
+                        `Renavam: ${d.renavam || '***'}`
                     ],
                     commonIssues: [
-                        d.situacao_roubo_furto ? "ALERTA: Roubo/Furto" : "Sem registro de roubo",
+                        d.situacao_roubo_furto ? `ALERTA: ${d.situacao_roubo_furto}` : "Sem registro de roubo",
                         d.restricoes_judiciais ? "ALERTA: Restrição Judicial" : "Sem restrições"
                     ],
-                    history: `Proprietário Atual: ${d.proprietario_nome || 'Consultar Detalhado'}\nSituação: ${d.situacao_veiculo}`,
+                    history: `Proprietário Atual: ${d.proprietario_nome || d.nome_proprietario || 'Consultar Detalhado'}\nSituação: ${d.situacao_veiculo || 'Regular'}`,
                     source: 'Infosimples'
                 });
                 setLoading(false);
