@@ -1,11 +1,15 @@
+
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, RefreshCw, AlertCircle, Check } from 'lucide-react';
+import { Camera, Upload, RefreshCw, AlertCircle, Check, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { analyzeImage } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
 
 const Scanner: React.FC = () => {
+  const navigate = useNavigate();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<string | null>(null);
+  const [detectedPlate, setDetectedPlate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -15,7 +19,8 @@ const Scanner: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        setAnalysis(null); // Clear previous analysis
+        setAnalysis(null);
+        setDetectedPlate(null);
       };
       reader.readAsDataURL(file);
     }
@@ -25,13 +30,23 @@ const Scanner: React.FC = () => {
     if (!imagePreview) return;
 
     setLoading(true);
+    setDetectedPlate(null);
+    
     try {
-      // Extract base64 content and mimetype
       const base64Data = imagePreview.split(',')[1];
       const mimeType = imagePreview.split(';')[0].split(':')[1];
       
       const result = await analyzeImage(base64Data, mimeType);
       setAnalysis(result);
+
+      // Regex simples para tentar achar placa no texto Markdown (Padrão Mercosul ou antigo)
+      // Ex: ABC1234 ou ABC-1234
+      const plateRegex = /[A-Z]{3}[-]?[0-9][0-9A-Z][0-9]{2}/g;
+      const match = result?.match(plateRegex);
+      if (match && match.length > 0) {
+          setDetectedPlate(match[0].replace('-', ''));
+      }
+
     } catch (error) {
       console.error(error);
       alert("Erro ao analisar imagem. Tente uma imagem mais clara.");
@@ -39,6 +54,12 @@ const Scanner: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleQuickInvestigate = () => {
+      if (detectedPlate) {
+          navigate(`/vehicle?q=${detectedPlate}`);
+      }
+  }
 
   return (
     <div className="max-w-5xl mx-auto h-[calc(100vh-140px)] flex flex-col lg:flex-row gap-6">
@@ -83,6 +104,7 @@ const Scanner: React.FC = () => {
                 e.stopPropagation();
                 setImagePreview(null);
                 setAnalysis(null);
+                setDetectedPlate(null);
                 if(fileInputRef.current) fileInputRef.current.value = '';
               }}
               className="absolute top-4 right-4 p-2 bg-white text-slate-600 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors shadow-sm border border-slate-200"
@@ -115,14 +137,14 @@ const Scanner: React.FC = () => {
       </div>
 
       {/* Área de Resultado */}
-      <div className="flex-1 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden h-full shadow-lg shadow-slate-200/50">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
+      <div className="flex-1 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden h-full shadow-lg shadow-slate-200/50 relative">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
           <h2 className="font-semibold text-slate-800 flex items-center gap-2">
             <Check size={18} className="text-emerald-500" /> Resultado da Análise
           </h2>
         </div>
         
-        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white">
+        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white pb-24">
           {!analysis && !loading && (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
               <AlertCircle size={48} className="mb-4" />
@@ -147,6 +169,29 @@ const Scanner: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Action Button Overlay */}
+        {detectedPlate && (
+            <div className="absolute bottom-6 left-6 right-6">
+                <button 
+                    onClick={handleQuickInvestigate}
+                    className="w-full bg-slate-900 text-white p-4 rounded-xl shadow-xl flex items-center justify-between hover:bg-slate-800 transition-all animate-fade-in-up"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                            <Search size={20} />
+                        </div>
+                        <div className="text-left">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold">Placa Detectada</p>
+                            <p className="text-lg font-bold font-mono">{detectedPlate}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-300">
+                        Investigar Agora <Search size={16} />
+                    </div>
+                </button>
+            </div>
+        )}
       </div>
     </div>
   );

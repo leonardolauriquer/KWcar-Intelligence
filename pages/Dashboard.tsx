@@ -11,18 +11,18 @@ import {
   Briefcase, 
   Zap, 
   ArrowUpRight,
-  ShieldCheck,
   Activity,
-  CreditCard,
-  Clock,
   History,
   Building2,
   Swords,
-  Command
+  Command,
+  Eye,
+  Cpu
 } from 'lucide-react';
 import { getHistory, HistoryItem } from '../services/historyService';
 import AutocompleteInput from '../components/AutocompleteInput';
 import { GLOBAL_ACTIONS, getPathForAction } from '../data/appActions';
+import { getWatchlist, WatchlistItem } from '../services/watchlistService';
 
 // Definição dos Aplicativos/Módulos do Sistema
 interface AppItem {
@@ -31,90 +31,81 @@ interface AppItem {
   description: string;
   icon: any;
   path: string;
-  gradient: string;
-  textColor: string;
+  color: string;
   popular?: boolean;
 }
 
 const SYSTEM_APPS: AppItem[] = [
   {
     id: 'consult_cpf',
-    title: 'Dossiê Pessoa Física',
-    description: 'Varredura completa RFB, Score e Antecedentes.',
+    title: 'Dossiê PF',
+    description: 'Varredura RFB, Score e Criminal.',
     icon: Users,
     path: '/person',
-    gradient: 'from-purple-500 to-indigo-600',
-    textColor: 'text-purple-600',
+    color: 'text-purple-400',
     popular: true
   },
   {
     id: 'consult_vehicle',
-    title: 'Radar Veicular 360º',
-    description: 'Decodificador de Chassi, FIPE e Restrições.',
+    title: 'Radar Veicular',
+    description: 'Decodificador Chassi e FIPE.',
     icon: Car,
     path: '/vehicle',
-    gradient: 'from-blue-500 to-cyan-500',
-    textColor: 'text-blue-600',
+    color: 'text-blue-400',
     popular: true
   },
   {
     id: 'vehicle_compare',
-    title: 'Modo Batalha',
-    description: 'Comparativo técnico e mercadológico IA.',
+    title: 'Battle Mode',
+    description: 'Comparativo técnico IA.',
     icon: Swords,
     path: '/compare',
-    gradient: 'from-red-500 to-orange-500',
-    textColor: 'text-red-600',
+    color: 'text-red-400',
     popular: true
   },
   {
     id: 'scanner_ai',
-    title: 'Vision AI Scanner',
-    description: 'Diagnóstico visual e OCR via Inteligência Artificial.',
+    title: 'Vision AI',
+    description: 'Diagnóstico visual e OCR.',
     icon: ScanLine,
     path: '/scanner',
-    gradient: 'from-emerald-400 to-teal-600',
-    textColor: 'text-teal-600'
+    color: 'text-emerald-400'
   },
   {
     id: 'fipe_table',
-    title: 'Mercado & FIPE',
-    description: 'Valuation histórico e tendências.',
+    title: 'Mercado',
+    description: 'Valuation histórico.',
     icon: Activity,
     path: '/vehicle',
-    gradient: 'from-orange-400 to-amber-500',
-    textColor: 'text-orange-600'
+    color: 'text-orange-400'
   },
   {
     id: 'cnpj_data',
-    title: 'Inteligência PJ',
-    description: 'QSA, Dívida Ativa e Riscos Corporativos.',
+    title: 'Intel PJ',
+    description: 'QSA e Riscos Corp.',
     icon: Briefcase,
     path: '/person',
-    gradient: 'from-slate-600 to-slate-800',
-    textColor: 'text-slate-600'
+    color: 'text-slate-400'
   },
   {
     id: 'address_finder',
     title: 'Geo Location',
-    description: 'Precisão de endereço via CEP e Coordenadas.',
+    description: 'Precisão de endereço.',
     icon: MapPin,
     path: '/utilities',
-    gradient: 'from-pink-500 to-rose-500',
-    textColor: 'text-pink-600'
+    color: 'text-pink-400'
   },
   {
     id: 'services_catalog',
     title: 'API Gateway',
-    description: 'Acesso direto a 300+ endpoints governamentais.',
+    description: 'Acesso a 300+ endpoints.',
     icon: Search,
     path: '/services',
-    gradient: 'from-violet-500 to-fuchsia-600',
-    textColor: 'text-violet-600'
+    color: 'text-violet-400'
   }
 ];
 
-// Componente AppCard com efeito Holográfico
+// Componente AppCard Estilo HUD
 interface AppCardProps {
   app: AppItem;
   isFav: boolean;
@@ -128,46 +119,30 @@ const AppCard: React.FC<AppCardProps> = ({ app, isFav, onToggleFav, onNavigate }
   return (
     <div 
       onClick={() => onNavigate(app.path)}
-      className="group relative h-full cursor-pointer"
+      className="glass-card group relative p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-white/[0.03] overflow-hidden border border-white/5 hover:border-blue-500/30"
     >
-      {/* Background Glow Effect on Hover */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${app.gradient} opacity-0 group-hover:opacity-10 blur-xl rounded-3xl transition-opacity duration-500`} />
-      
-      <div className="glass-card relative h-full p-6 rounded-3xl border border-white/60 hover:border-white transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] flex flex-col justify-between overflow-hidden">
-        
-        {/* Decorator Gradient Top */}
-        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${app.gradient} opacity-50 group-hover:opacity-100 transition-opacity`} />
+      {/* Scanning Line Effect on Hover */}
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-blue-500/10 to-transparent -translate-y-full group-hover:translate-y-full transition-transform duration-1000 pointer-events-none"></div>
 
-        <div className="absolute top-4 right-4 z-20">
-          <button 
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-3 rounded-xl bg-slate-900/50 border border-white/10 group-hover:border-blue-500/50 transition-colors ${app.color}`}>
+            <Icon size={24} />
+        </div>
+        <button 
             onClick={(e) => onToggleFav(e, app.id)}
-            className={`p-2 rounded-full transition-all ${isFav ? 'bg-yellow-100 text-yellow-500' : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-50'}`}
-          >
-            <Star size={18} fill={isFav ? "currentColor" : "none"} />
-          </button>
-        </div>
+            className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 ${isFav ? 'text-yellow-400 opacity-100' : 'text-slate-500'}`}
+        >
+            <Star size={16} fill={isFav ? "currentColor" : "none"} />
+        </button>
+      </div>
 
-        <div className="mb-6 relative z-10">
-          <div className={`
-             w-14 h-14 rounded-2xl flex items-center justify-center mb-5
-             bg-gradient-to-br ${app.gradient} text-white
-             shadow-lg shadow-gray-200/50 group-hover:scale-110 transition-transform duration-300
-          `}>
-            <Icon size={26} />
-          </div>
-          <h3 className="font-bold text-slate-800 text-lg leading-tight mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-slate-900 group-hover:to-slate-600 transition-colors">
-            {app.title}
-          </h3>
-          <p className="text-slate-500 text-sm leading-relaxed font-medium">
-            {app.description}
-          </p>
-        </div>
+      <h3 className="font-bold text-white text-lg mb-1 group-hover:text-blue-300 transition-colors font-sans">{app.title}</h3>
+      <p className="text-slate-500 text-xs font-mono leading-relaxed line-clamp-2">
+        {app.description}
+      </p>
 
-        <div className="flex items-center justify-end">
-          <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-colors duration-300">
-            <ArrowUpRight size={18} />
-          </div>
-        </div>
+      <div className="mt-4 flex items-center text-xs text-slate-600 font-bold uppercase tracking-widest group-hover:text-blue-400 transition-colors">
+         Acessar <ArrowUpRight size={12} className="ml-1" />
       </div>
     </div>
   );
@@ -186,6 +161,7 @@ const Dashboard: React.FC = () => {
   });
   
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
 
   useEffect(() => {
     localStorage.setItem('kw_user_favorites', JSON.stringify(favorites));
@@ -193,6 +169,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     setHistory(getHistory());
+    setWatchlist(getWatchlist());
   }, []);
 
   const toggleFavorite = (e: React.MouseEvent, appId: string) => {
@@ -205,15 +182,21 @@ const Dashboard: React.FC = () => {
   const handleGlobalSelect = (action: string) => {
     setGlobalQuery(action);
     const path = getPathForAction(action);
-    // Pequeno delay para visual
     setTimeout(() => navigate(path), 300);
   };
+
+  const navigateToWatchItem = (item: WatchlistItem) => {
+      if (item.type === 'VEHICLE') {
+          navigate(`/vehicle?q=${item.value}`);
+      } else {
+          navigate('/person');
+      }
+  }
 
   const favoriteApps = SYSTEM_APPS.filter(app => favorites.includes(app.id));
   const popularApps = SYSTEM_APPS.filter(app => app.popular);
   const allApps = SYSTEM_APPS;
 
-  // Saudações Dinâmicas
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bom dia';
@@ -221,52 +204,43 @@ const Dashboard: React.FC = () => {
     return 'Boa noite';
   };
 
-  const getHistoryIcon = (type: string) => {
-    if (type === 'VEHICLE') return <Car size={16} />;
-    if (type === 'COMPANY') return <Building2 size={16} />;
-    return <Users size={16} />;
-  }
-
   const formatTime = (ts: number) => {
     const date = new Date(ts);
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
   return (
-    <div className="space-y-12 animate-fade-in-up pb-10 font-sans">
+    <div className="space-y-8 animate-fade-in-up pb-10">
       
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-[2.5rem] p-10 text-white shadow-2xl">
-         {/* Background complexo */}
-         <div className="absolute inset-0 bg-slate-900 z-0"></div>
-         <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-indigo-900 opacity-80 z-0"></div>
-         <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500 rounded-full blur-[100px] opacity-50 animate-pulse-slow"></div>
-         <div className="absolute bottom-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 z-0 mix-blend-overlay"></div>
+      {/* Hero Section Holographic */}
+      <div className="relative overflow-hidden rounded-[2rem] p-8 md:p-12 border border-blue-500/20 shadow-[0_0_40px_rgba(59,130,246,0.1)] group">
+         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl z-0"></div>
+         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/40 to-purple-900/40 z-0"></div>
+         <div className="absolute -right-20 -top-20 w-96 h-96 bg-blue-500 rounded-full blur-[120px] opacity-20 animate-pulse-slow"></div>
          
-         <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-6">
-            <div className="flex-1 w-full max-w-2xl">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-bold mb-6 text-cyan-300">
-                  <Zap size={12} className="fill-cyan-300" /> SYSTEM ONLINE v2.4
+         <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-8">
+            <div className="flex-1 w-full max-w-3xl">
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 backdrop-blur-md text-[10px] font-bold mb-6 text-blue-300 uppercase tracking-widest">
+                  <Zap size={10} className="fill-blue-300" /> System Online v2.4
                </div>
-               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
-                 {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-white">Admin</span>
+               <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 text-white">
+                 {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Admin</span>
                </h1>
                
                {/* Global Smart Search */}
-               <div className="mt-8 relative z-20 group">
+               <div className="mt-8 relative z-20 group w-full">
                   <AutocompleteInput 
                     value={globalQuery}
                     onChange={setGlobalQuery}
                     onSelect={handleGlobalSelect}
                     options={GLOBAL_ACTIONS}
-                    placeholder="O que você deseja investigar hoje?"
+                    placeholder="Comando Inicial (Ex: Consultar Placa...)"
                     icon={Command}
-                    className="w-full text-slate-900"
+                    className="w-full"
                   />
-                  <div className="mt-2 flex gap-4 text-xs text-blue-200 font-medium opacity-80 pl-4">
-                     <span>Experimente: "Consultar Placa"</span>
-                     <span>"Ver Tabela FIPE"</span>
-                     <span>"CPF"</span>
+                  <div className="mt-3 flex gap-4 text-[10px] font-mono text-slate-400 opacity-70 pl-4 uppercase tracking-wider">
+                     <span>CMD: "Placa ABC1234"</span>
+                     <span>CMD: "CPF 000..."</span>
                   </div>
                </div>
             </div>
@@ -275,16 +249,16 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Coluna Principal: Favoritos e Destaques */}
+        {/* Coluna Principal: Módulos */}
         <div className="lg:col-span-2 space-y-10">
-            {/* Seção Favoritos (Grid Bento Style) */}
+            {/* Favoritos */}
             <div>
-                <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-mono uppercase tracking-wider">
-                <Star className="text-yellow-500" size={20} /> Acesso Rápido
+                <h2 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2 font-mono uppercase tracking-widest pl-2">
+                    <Star className="text-yellow-500" size={14} /> Acesso Prioritário
                 </h2>
                 
                 {favoriteApps.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {favoriteApps.map(app => (
                     <AppCard 
                         key={app.id} 
@@ -296,19 +270,18 @@ const Dashboard: React.FC = () => {
                     ))}
                 </div>
                 ) : (
-                <div className="border-2 border-dashed border-slate-300/60 rounded-3xl p-10 text-center bg-slate-50/50">
-                    <p className="text-slate-400 font-medium">Configure seu workspace.</p>
-                    <p className="text-slate-400 text-sm mt-1">Favorite apps para acesso imediato.</p>
+                <div className="border border-dashed border-white/10 rounded-2xl p-8 text-center bg-white/5">
+                    <p className="text-slate-500 text-sm font-mono">Slot Vazio. Adicione módulos.</p>
                 </div>
                 )}
             </div>
 
-             {/* Seção Inteligência (Destaques) */}
+             {/* Destaques */}
             <div>
-                <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-mono uppercase tracking-wider">
-                <Activity className="text-blue-600" size={20} /> Inteligência Ativa
+                <h2 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2 font-mono uppercase tracking-widest pl-2">
+                    <Cpu className="text-blue-500" size={14} /> Módulos de Inteligência
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {popularApps.map(app => (
                     <AppCard 
                         key={app.id} 
@@ -322,37 +295,63 @@ const Dashboard: React.FC = () => {
             </div>
         </div>
 
-        {/* Coluna Lateral: Histórico e Utilidade */}
-        <div className="space-y-8">
-            {/* Widget Histórico */}
-            <div className="glass-card rounded-3xl border border-slate-200 overflow-hidden flex flex-col h-full max-h-[600px]">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <History size={18} className="text-slate-500" /> Atividade Recente
+        {/* Coluna Lateral: Widgets */}
+        <div className="space-y-6">
+            
+            {/* Widget Watchlist */}
+            <div className="glass-card rounded-2xl border border-white/10 overflow-hidden flex flex-col h-fit">
+                <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-200 text-sm flex items-center gap-2 font-mono uppercase tracking-wider">
+                        <Eye size={14} className="text-amber-500" /> Frota Alvo
                     </h3>
-                    <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono">{history.length}</span>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30 font-mono">{watchlist.length}</span>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
+                <div className="p-2 space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar">
+                    {watchlist.length > 0 ? watchlist.map((item) => (
+                        <div key={item.id} onClick={() => navigateToWatchItem(item)} className="group p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all border border-transparent hover:border-white/5">
+                            <div className="flex justify-between items-center mb-1">
+                                <h4 className="font-bold text-white font-mono text-sm">{item.value}</h4>
+                                <ArrowUpRight size={12} className="text-slate-500 group-hover:text-amber-400" />
+                            </div>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wide truncate">{item.title}</p>
+                        </div>
+                    )) : (
+                        <div className="p-6 text-center text-xs text-slate-600 font-mono">
+                            Nenhum alvo monitorado.
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Widget Histórico */}
+            <div className="glass-card rounded-2xl border border-white/10 overflow-hidden flex flex-col flex-1">
+                <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-200 text-sm flex items-center gap-2 font-mono uppercase tracking-wider">
+                        <History size={14} className="text-slate-400" /> Log de Atividade
+                    </h3>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-1">
                     {history.length > 0 ? history.map((item) => (
-                        <div key={item.id} className="group p-3 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all cursor-pointer flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                                item.type === 'VEHICLE' ? 'bg-blue-100 text-blue-600' : 
-                                item.type === 'COMPANY' ? 'bg-indigo-100 text-indigo-600' : 'bg-purple-100 text-purple-600'
+                        <div key={item.id} className="group p-3 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/5 transition-all cursor-pointer flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                item.type === 'VEHICLE' ? 'bg-blue-500/20 text-blue-400' : 
+                                item.type === 'COMPANY' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-purple-500/20 text-purple-400'
                             }`}>
-                                {getHistoryIcon(item.type)}
+                                {item.type === 'VEHICLE' ? <Car size={14}/> : <Users size={14}/>}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-slate-700 text-sm truncate">{item.title}</h4>
-                                <p className="text-xs text-slate-400 truncate">{item.subtitle}</p>
+                                <h4 className="font-bold text-slate-300 text-xs truncate font-mono">{item.title}</h4>
+                                <p className="text-[10px] text-slate-500 truncate">{item.subtitle}</p>
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
+                            <div className="text-[10px] text-slate-600 font-mono">
                                 {formatTime(item.timestamp)}
                             </div>
                         </div>
                     )) : (
-                        <div className="text-center p-8 text-slate-400 text-sm">
-                            Nenhuma consulta recente.
+                        <div className="text-center p-8 text-slate-600 text-xs font-mono">
+                            Sem registros recentes.
                         </div>
                     )}
                 </div>
@@ -361,12 +360,12 @@ const Dashboard: React.FC = () => {
 
       </div>
 
-      {/* Todos os Apps (Compact Grid) */}
-      <div className="pt-8 border-t border-slate-200/60">
-        <h2 className="text-lg font-bold text-slate-600 mb-6 font-mono uppercase tracking-wider opacity-70">
-           Módulos Complementares
+      {/* Footer Grid */}
+      <div className="pt-8 border-t border-white/5">
+        <h2 className="text-xs font-bold text-slate-500 mb-6 font-mono uppercase tracking-widest pl-2">
+           Módulos Secundários
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {allApps.filter(a => !a.popular).map(app => (
             <AppCard 
                 key={app.id} 

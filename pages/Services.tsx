@@ -1,14 +1,16 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, Car, Users, Zap, Globe, 
   Building2, Scale, Lock, MapPin, 
   Phone, Briefcase, FileText, 
   ShieldCheck, AlertTriangle, 
-  Loader2, X, CheckCircle, Database
+  Loader2, X, CheckCircle, Database,
+  Sparkles
 } from 'lucide-react';
 import { executeGenericConsulta } from '../services/infosimplesService';
 import AutocompleteInput from '../components/AutocompleteInput';
+import { getContext } from '../utils/contextUtils';
 
 // --- DEFINIÇÃO DE TIPOS ---
 type InputType = 'CPF' | 'CNPJ' | 'PLACA' | 'RENAVAM' | 'PROCESSO' | 'TELEFONE' | 'CEP' | 'TEXTO' | 'GENERICO';
@@ -194,6 +196,7 @@ const Services: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
+  const [autoFilled, setAutoFilled] = useState(false);
 
   // Filtragem (agora usa o searchTerm que pode vir do Autocomplete)
   const filteredServices = useMemo(() => {
@@ -210,12 +213,33 @@ const Services: React.FC = () => {
     // Opcional: abrir automaticamente o modal se houver apenas um match exato
     const match = SERVICE_CATALOG.find(s => s.name === serviceName);
     if(match) {
-        setSelectedService(match);
-        setPrimaryInput('');
-        setSecondaryInput('');
-        setResult(null);
-        setError('');
+        openServiceModal(match);
     }
+  };
+
+  const openServiceModal = (service: ServiceDefinition) => {
+      setSelectedService(service);
+      setResult(null);
+      setError('');
+      setAutoFilled(false);
+      
+      // Smart Fill: Tenta preencher automaticamente baseado no contexto anterior
+      let savedValue = '';
+      if (service.inputType === 'CPF') savedValue = getContext('last_cpf');
+      else if (service.inputType === 'CNPJ') savedValue = getContext('last_cnpj');
+      else if (service.inputType === 'PLACA') savedValue = getContext('last_plate');
+      else if (service.inputType === 'PROCESSO') savedValue = getContext('last_process');
+
+      if (savedValue) {
+          setPrimaryInput(savedValue);
+          setAutoFilled(true);
+          // Remove o aviso de auto-filled após alguns segundos
+          setTimeout(() => setAutoFilled(false), 5000);
+      } else {
+          setPrimaryInput('');
+      }
+      
+      setSecondaryInput('');
   };
 
   const handleExecute = async () => {
@@ -324,7 +348,7 @@ const Services: React.FC = () => {
           return (
             <div 
               key={idx}
-              onClick={() => { setSelectedService(service); setPrimaryInput(''); setSecondaryInput(''); setResult(null); setError(''); }}
+              onClick={() => openServiceModal(service)}
               className="bg-white border border-slate-200 p-4 rounded-xl hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer group flex items-start gap-4"
             >
               <div className="p-3 bg-slate-50 text-slate-500 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -374,7 +398,7 @@ const Services: React.FC = () => {
             <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white">
               <div className="grid gap-6">
                  {/* Formulário de Input */}
-                 <div className="flex flex-col sm:flex-row gap-4">
+                 <div className="flex flex-col sm:flex-row gap-4 relative">
                     <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                             {selectedService.inputType === 'CPF' ? 'CPF do Alvo' :
@@ -384,16 +408,23 @@ const Services: React.FC = () => {
                              selectedService.inputType === 'PROCESSO' ? 'Número do Processo' :
                              selectedService.inputType} *
                         </label>
-                        <input 
-                            type="text" 
-                            value={primaryInput}
-                            onChange={(e) => setPrimaryInput(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-blue-500 transition-all font-mono"
-                            placeholder={
-                                selectedService.inputType === 'PROCESSO' ? 'Ex: 0000000-00.2025.8.26.0000' : 
-                                "Digite aqui..."
-                            }
-                        />
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                value={primaryInput}
+                                onChange={(e) => setPrimaryInput(e.target.value)}
+                                className={`w-full bg-slate-50 border p-3 rounded-xl outline-none focus:border-blue-500 transition-all font-mono ${autoFilled ? 'border-blue-300 ring-2 ring-blue-500/20' : 'border-slate-200'}`}
+                                placeholder={
+                                    selectedService.inputType === 'PROCESSO' ? 'Ex: 0000000-00.2025.8.26.0000' : 
+                                    "Digite aqui..."
+                                }
+                            />
+                            {autoFilled && (
+                                <div className="absolute -top-8 right-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 animate-bounce shadow-md">
+                                    <Sparkles size={10} /> Preenchido do Histórico
+                                </div>
+                            )}
+                        </div>
                     </div>
                     
                     {/* Campos Secundários Condicionais */}

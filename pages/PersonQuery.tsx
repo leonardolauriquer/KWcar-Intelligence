@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Search, Loader2, User, ShieldCheck, AlertCircle, CarFront, Building2, MapPin, Users, Info, FileCheck, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Loader2, User, ShieldCheck, AlertCircle, CarFront, Building2, MapPin, Users, Info, FileCheck, Calendar, Printer, ArrowRight, Copy, Share2, CheckCircle } from 'lucide-react';
 import { generatePersonProfile } from '../services/geminiService';
 import { getCnpjData } from '../services/brasilApiService';
 import { getCondutorDenatran } from '../services/denatranService';
 import { getCpfInfosimples, getCnpjInfosimples, getVeiculosPorProprietario } from '../services/infosimplesService';
 import { PersonProfile } from '../types';
 import { addToHistory } from '../services/historyService';
+import { saveContext, copyToClipboard, generateShareText } from '../utils/contextUtils';
 
 const PersonQuery: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'cnpj' | 'cpf'>('cnpj');
   const [query, setQuery] = useState('');
   const [birthDate, setBirthDate] = useState(''); // Estado para Data de Nascimento
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PersonProfile | null>(null);
   const [error, setError] = useState('');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Formata data para o padrão exigido (DD/MM/AAAA) ou remove caracteres
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,6 +26,33 @@ const PersonQuery: React.FC = () => {
     if (v.length > 4) v = `${v.substring(0, 2)}/${v.substring(2, 4)}/${v.substring(4)}`;
     else if (v.length > 2) v = `${v.substring(0, 2)}/${v.substring(2)}`;
     setBirthDate(v);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopy = (text: string, label: string) => {
+      copyToClipboard(text);
+      setCopiedField(label);
+      setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleShare = () => {
+      if(!data) return;
+      const text = generateShareText(data.name, {
+          "Documento": data.cpf,
+          "Status": data.status,
+          "Score": data.score,
+          "Endereço": data.address ? `${data.address.street}, ${data.address.number}` : 'N/A'
+      });
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  const navigateToVehicle = (plate: string) => {
+      // Limpa a placa (remove hifens) e navega
+      const cleanPlate = plate.replace(/[^a-zA-Z0-9]/g, '');
+      navigate(`/vehicle?q=${cleanPlate}`);
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -34,6 +65,11 @@ const PersonQuery: React.FC = () => {
 
     try {
       const cleanQuery = query.replace(/[^\d]/g, '');
+      
+      // Salva contexto para uso em outras telas
+      if (activeTab === 'cnpj') saveContext('last_cnpj', cleanQuery);
+      else saveContext('last_cpf', cleanQuery);
+
       let vehiclesFound: any[] = [];
 
       // --- BUSCA PARALELA DE VEÍCULOS (Busca de Bens Detran) ---
@@ -223,14 +259,14 @@ const PersonQuery: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in-up">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 print:hidden">
         <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Investigação Cadastral</h1>
         <p className="text-slate-500 text-lg">Consulte dados de pessoas e seus bens (Infosimples + Detran).</p>
       </div>
 
       {/* Tabs de Seleção */}
       <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6 print:hidden">
           <div className="bg-white p-1.5 rounded-2xl border border-slate-200 flex shadow-sm">
             <button
               onClick={() => { setActiveTab('cnpj'); setQuery(''); setBirthDate(''); setData(null); setError(''); }}
@@ -326,7 +362,7 @@ const PersonQuery: React.FC = () => {
         {/* Results Area */}
         <div className="flex-[1.5]">
           {!data && !loading && (
-            <div className="h-full min-h-[300px] glass-card rounded-3xl flex flex-col items-center justify-center text-slate-400 p-8 text-center border-dashed border-2 border-slate-200 bg-transparent">
+            <div className="h-full min-h-[300px] glass-card rounded-3xl flex flex-col items-center justify-center text-slate-400 p-8 text-center border-dashed border-2 border-slate-200 bg-transparent print:hidden">
                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${activeTab === 'cnpj' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
                  {activeTab === 'cnpj' ? <Building2 size={32} /> : <User size={32} />}
                </div>
@@ -337,6 +373,22 @@ const PersonQuery: React.FC = () => {
 
           {data && (
             <div className="glass-card rounded-3xl overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200">
+               <div className="flex justify-end p-4 bg-slate-50 border-b border-slate-200 print:hidden gap-2">
+                   <button 
+                    onClick={handleShare}
+                    className="p-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-all flex items-center gap-2 text-sm font-bold"
+                    title="Enviar para WhatsApp"
+                   >
+                     <Share2 size={16} /> WhatsApp
+                   </button>
+                   <button 
+                    onClick={handlePrint}
+                    className="p-2 bg-white text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2 text-sm font-bold"
+                   >
+                     <Printer size={16} /> Imprimir
+                   </button>
+               </div>
+
               {/* Header do Cartão */}
               <div className={`p-8 border-b border-white/10 bg-gradient-to-r ${
                 data.source === 'BrasilAPI' || data.source === 'Denatran' || data.source === 'Infosimples'
@@ -352,7 +404,12 @@ const PersonQuery: React.FC = () => {
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-slate-800 leading-tight">{data.name}</h2>
-                      <p className="text-slate-500 font-mono mt-1 text-sm bg-white px-2 py-0.5 rounded inline-block border border-slate-200">{data.cpf}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                          <p className="text-slate-500 font-mono text-sm bg-white px-2 py-0.5 rounded border border-slate-200">{data.cpf}</p>
+                          <button onClick={() => handleCopy(data.cpf, 'Documento')} className="text-slate-400 hover:text-blue-500" title="Copiar">
+                              <Copy size={14} />
+                          </button>
+                      </div>
                     </div>
                   </div>
                   
@@ -402,7 +459,10 @@ const PersonQuery: React.FC = () => {
                 {/* Se for BrasilAPI ou Infosimples PJ */}
                 {(data.source === 'BrasilAPI' || (data.source === 'Infosimples' && activeTab === 'cnpj')) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                     <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative group/card">
+                        <button onClick={() => data.address && handleCopy(`${data.address.street}, ${data.address.number}`, 'Endereço')} className="absolute top-4 right-4 text-slate-300 hover:text-blue-500 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                            <Copy size={16} />
+                        </button>
                         <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2 text-sm uppercase tracking-wider text-blue-600">
                           <MapPin size={16}/> Endereço Registrado
                         </h3>
@@ -471,14 +531,22 @@ const PersonQuery: React.FC = () => {
                     </h3>
                     <div className="grid grid-cols-1 gap-3">
                       {data.vehicles.map((car, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-blue-300 transition-colors">
+                        <div 
+                           key={idx} 
+                           onClick={() => navigateToVehicle(car.plate)}
+                           className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group"
+                           title="Clique para investigar este veículo"
+                        >
                           <div>
-                            <p className="font-bold text-slate-800">{car.model}</p>
-                            <p className="text-xs text-slate-500 font-mono mt-1 bg-slate-100 px-2 py-0.5 rounded inline-block">{car.plate}</p>
+                            <p className="font-bold text-slate-800 group-hover:text-blue-700">{car.model}</p>
+                            <p className="text-xs text-slate-500 font-mono mt-1 bg-slate-100 px-2 py-0.5 rounded inline-block group-hover:bg-white">{car.plate}</p>
                           </div>
-                          <span className={`text-[10px] px-2 py-1 rounded border ${car.status === 'Em dia' || car.status === 'Consultar' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                            {car.status}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-[10px] px-2 py-1 rounded border ${car.status === 'Em dia' || car.status === 'Consultar' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                                {car.status}
+                            </span>
+                            <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-500" />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -503,6 +571,14 @@ const PersonQuery: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {/* Toast de Cópia */}
+      {copiedField && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-xl animate-fade-in-up flex items-center gap-2">
+            <CheckCircle size={16} className="text-emerald-400" />
+            {copiedField} copiado!
+        </div>
+      )}
     </div>
   );
 };
