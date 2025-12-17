@@ -66,19 +66,21 @@ const PersonQuery: React.FC = () => {
 
       let vehiclesFound: any[] = [];
 
+      // 1. Tentar buscar veículos (Independente do sucesso, prosseguimos para o perfil)
       try {
         const veiculosRes = await getVeiculosPorProprietario(cleanQuery);
         if (veiculosRes.data && Array.isArray(veiculosRes.data)) {
             vehiclesFound = veiculosRes.data.map((v: any) => ({
                 model: `${v.marca || ''} ${v.modelo || 'Veículo Identificado'}`,
-                plate: v.placa,
+                plate: v.placa || v.placa_veiculo,
                 status: v.situacao || 'Consultar'
             }));
         }
       } catch (vehError) {
-        console.log("Busca de veículos: Sem retorno ou restrito.");
+        console.warn("Frota: Endpoint indisponível ou sem bens vinculados.");
       }
 
+      // 2. Consulta de Perfil Principal
       if (activeTab === 'cnpj') {
         if (cleanQuery.length !== 14) throw new Error("CNPJ deve conter 14 dígitos.");
 
@@ -107,7 +109,9 @@ const PersonQuery: React.FC = () => {
              addToast('success', 'CNPJ localizado com sucesso');
              return;
           }
-        } catch (infoError) { console.warn("Infosimples PJ falhou, tentando BrasilAPI..."); }
+        } catch (infoError) { 
+            console.warn("Infosimples PJ falhou, tentando BrasilAPI..."); 
+        }
 
         const cnpjData = await getCnpjData(cleanQuery);
         const profile: PersonProfile = {
@@ -123,9 +127,10 @@ const PersonQuery: React.FC = () => {
         };
         setData(profile);
         addToHistory({ type: 'COMPANY', title: profile.name, subtitle: `CNPJ: ${profile.cpf}`, status: 'success' });
-        addToast('success', 'Dados da Receita obtidos');
+        addToast('success', 'Dados da Receita obtidos (BrasilAPI)');
 
       } else {
+        // Fluxo CPF
         if(!birthDate || birthDate.length !== 10) throw new Error("Para consulta completa de CPF, a Data de Nascimento é obrigatória.");
 
         try {
@@ -147,8 +152,7 @@ const PersonQuery: React.FC = () => {
             return;
           }
         } catch (e: any) {
-           if (e.message.includes("Infosimples API Error")) throw e;
-           console.warn("Infosimples CPF indisponível, tentando Denatran/IA");
+           console.warn("Infosimples CPF indisponível, tentando Denatran/IA. Erro:", e.message);
         }
 
         try {
@@ -169,8 +173,11 @@ const PersonQuery: React.FC = () => {
              addToast('success', 'Dados de CNH Localizados');
              return;
            }
-        } catch (denatranError) { console.warn("Falha no Denatran, usando fallback IA"); }
+        } catch (denatranError) { 
+            console.warn("Falha no Denatran, usando fallback IA"); 
+        }
 
+        // Fallback final IA
         const result = await generatePersonProfile(query);
         const finalVehicles = vehiclesFound.length > 0 ? vehiclesFound : result.vehicles;
         const profile: PersonProfile = { 
@@ -178,7 +185,7 @@ const PersonQuery: React.FC = () => {
         };
         setData(profile);
         addToHistory({ type: 'PERSON', title: profile.name, subtitle: `CPF: ${profile.cpf} (IA)`, status: 'success' });
-        addToast('warning', 'Dados Simulados (IA)', 'Serviços oficiais indisponíveis.');
+        addToast('warning', 'Dados Simulados (IA)', 'Serviços oficiais indisponíveis ou dados não encontrados.');
       }
     } catch (err: any) {
       console.error(err);
@@ -201,7 +208,6 @@ const PersonQuery: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 space-y-6 print:hidden">
           
-          {/* Tabs Neumórficas */}
           <div className="bg-slate-900/50 p-1.5 rounded-2xl border border-white/10 flex shadow-inner">
             <button
               onClick={() => { setActiveTab('cnpj'); setQuery(''); setBirthDate(''); setData(null); }}
@@ -272,7 +278,6 @@ const PersonQuery: React.FC = () => {
           </form>
         </div>
 
-        {/* Results Area */}
         <div className="flex-[1.5]">
           {!data && !loading && (
             <div className="h-full min-h-[300px] glass-card rounded-3xl flex flex-col items-center justify-center text-slate-500 p-8 text-center border-dashed border border-white/5 bg-transparent print:hidden">
@@ -301,7 +306,6 @@ const PersonQuery: React.FC = () => {
                    </button>
                </div>
 
-              {/* Header do Cartão */}
               <div className="p-8 border-b border-white/10 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 -mr-20 -mt-20 ${data.source === 'IA' ? 'bg-purple-500' : 'bg-emerald-500'}`}></div>
                 
@@ -359,10 +363,7 @@ const PersonQuery: React.FC = () => {
                 </div>
               </div>
 
-              {/* Conteúdo */}
               <div className="p-8 space-y-8">
-                
-                {/* Se for BrasilAPI ou Infosimples PJ */}
                 {(data.source === 'BrasilAPI' || (data.source === 'Infosimples' && activeTab === 'cnpj')) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div className="bg-slate-800/30 p-5 rounded-2xl border border-white/5 relative group/card hover:bg-slate-800/50 transition-colors">
@@ -398,7 +399,6 @@ const PersonQuery: React.FC = () => {
                   </div>
                 )}
 
-                {/* Veículos Encontrados - DESTAQUE */}
                 <section className="bg-slate-900/30 rounded-2xl border border-white/10 p-6 shadow-inner">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
@@ -445,12 +445,11 @@ const PersonQuery: React.FC = () => {
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                        <p className="text-slate-500 text-sm font-mono">Nenhum veículo encontrado nesta base.</p>
+                        <p className="text-slate-500 text-sm font-mono">Nenhum veículo encontrado nesta base ou acesso restrito.</p>
                     </div>
                   )}
                 </section>
 
-                {/* Notas */}
                 <section>
                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
                      {data.source === 'BrasilAPI' ? 'Dados da Receita' : 'Análise Preliminar'}
