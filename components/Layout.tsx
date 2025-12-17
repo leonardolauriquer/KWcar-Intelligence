@@ -17,25 +17,26 @@ import {
   Cpu
 } from 'lucide-react';
 import AiAssistant from './AiAssistant';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
-  children: React.ReactNode;
-  onLogout: () => void;
+  children?: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const { logout } = useAuth();
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Serviços API', path: '/services', icon: Grid },
     { name: 'Dossiê Pessoa', path: '/person', icon: Users },
     { name: 'Dossiê Veículo', path: '/vehicle', icon: Car },
-    { name: 'Battle Mode', path: '/compare', icon: Swords }, 
+    { name: 'Comparativo', path: '/compare', icon: Swords }, 
     { name: 'Utilitários', path: '/utilities', icon: Briefcase },
     { name: 'Vision AI', path: '/scanner', icon: ScanLine },
-    { name: 'Sistema', path: '/settings', icon: SettingsIcon },
+    { name: 'Configurações', path: '/settings', icon: SettingsIcon },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -121,7 +122,7 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
 
         {/* User Status Card */}
         <div className="p-4 mx-4 mb-4 rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-md relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           
           <div className="flex justify-between items-start mb-2 relative z-10">
             <div>
@@ -138,8 +139,8 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
           </div>
 
           <button 
-            onClick={onLogout}
-            className="w-full mt-2 flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all py-2 border border-white/5 hover:border-red-500/20 uppercase tracking-wide"
+            onClick={logout}
+            className="w-full mt-2 flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all py-2 border border-white/5 hover:border-red-500/20 uppercase tracking-wide cursor-pointer relative z-10"
           >
             <LogOut size={14} /> Encerrar Sessão
           </button>

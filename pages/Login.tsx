@@ -2,12 +2,10 @@
 import React, { useState } from 'react';
 import { Car, ArrowRight, Lock, Mail, Loader2, UserCheck, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LoginProps {
-  onLogin: () => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC = () => {
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,9 +13,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // Simula delay de rede
     setTimeout(() => {
       setLoading(false);
-      onLogin();
+      login();
     }, 1500);
   };
 

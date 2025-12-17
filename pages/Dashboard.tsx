@@ -56,7 +56,7 @@ const SYSTEM_APPS: AppItem[] = [
   },
   {
     id: 'vehicle_compare',
-    title: 'Battle Mode',
+    title: 'Comparativo',
     description: 'Comparativo técnico IA.',
     icon: Swords,
     path: '/compare',

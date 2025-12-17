@@ -14,8 +14,11 @@ export const generatePersonProfile = async (query: string) => {
     const prompt = `
       Atue como um sistema de banco de dados governamental simulado.
       O usuário buscou por: "${query}".
-      Gere um perfil fictício JSON realista de um cidadão brasileiro para fins de demonstração.
-      NÃO use dados reais de ninguém. Invente os dados.
+      Gere um perfil fictício JSON realista de um cidadão brasileiro.
+      
+      IMPORTANTE: O usuário quer consultar os CARROS no nome dessa pessoa.
+      Gere um array 'vehicles' com 2 ou 3 veículos variados (ex: um carro popular novo e uma moto ou SUV).
+      NÃO use dados reais de ninguém. Invente os dados para demonstração.
       
       Schema esperado:
       {
@@ -23,8 +26,11 @@ export const generatePersonProfile = async (query: string) => {
         "cpf": "000.000.000-00",
         "status": "Regular" | "Pendente" | "Suspenso",
         "score": number (0-1000),
-        "vehicles": [{ "model": "Carro Ano", "plate": "ABC-1234", "status": "Em dia" }],
-        "notes": "Breve histórico financeiro simulado"
+        "vehicles": [
+           { "model": "Modelo completo (ex: Toyota Corolla XEi 2.0)", "plate": "ABC-1234", "status": "Em dia" },
+           { "model": "Outro veículo", "plate": "XYZ-9876", "status": "IPVA Atrasado" }
+        ],
+        "notes": "Breve histórico financeiro simulado e profissão"
       }
     `;
 

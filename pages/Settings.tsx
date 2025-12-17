@@ -3,10 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Shield, CreditCard, Check, 
   Palette, Smartphone, Zap, Crown, CheckCircle2,
-  AlertCircle
+  AlertCircle, LogOut, FileText, Scale, ShieldCheck
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Settings: React.FC = () => {
+  const { logout } = useAuth();
+  
   // Estado do Usuário (Simulado)
   const [user, setUser] = useState({
     name: 'Admin KWcar',
@@ -29,9 +32,9 @@ const Settings: React.FC = () => {
     root.style.filter = `hue-rotate(${themeHue}deg)`;
     localStorage.setItem('kw_theme_hue', themeHue);
     
-    // Cleanup ao desmontar (opcional, mas bom para garantir consistência)
+    // Cleanup ao desmontar
     return () => {
-      // root.style.filter = 'none'; // Não remover para persistir a navegação
+      // root.style.filter = 'none'; // Mantemos para persistir a navegação
     };
   }, [themeHue]);
 
@@ -40,7 +43,7 @@ const Settings: React.FC = () => {
     { name: 'Cyber Purple', hue: '45', color: 'bg-purple-600' },
     { name: 'Forest Green', hue: '-100', color: 'bg-emerald-600' },
     { name: 'Sunset Orange', hue: '150', color: 'bg-orange-600' },
-    { name: 'Midnight', hue: '200', color: 'bg-slate-800' },
+    { name: 'Midnight', hue: '200', color: 'bg-slate-700' },
   ];
 
   const plans = [
@@ -74,8 +77,8 @@ const Settings: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in-up pb-10">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Configurações</h1>
-        <p className="text-slate-500 text-lg">Gerencie seu perfil, aparência e assinatura.</p>
+        <h1 className="text-4xl font-bold text-white tracking-tight">Configurações</h1>
+        <p className="text-slate-400 text-lg">Gerencie seu perfil, aparência e assinatura.</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -84,40 +87,52 @@ const Settings: React.FC = () => {
         <div className="space-y-8 xl:col-span-1">
           
           {/* Card de Perfil */}
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-600 to-purple-600 opacity-90"></div>
+          <div className="glass-card p-6 rounded-3xl border border-white/10 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-900/50 to-purple-900/50 opacity-90 border-b border-white/5"></div>
             
             <div className="relative z-10 flex flex-col items-center mt-4">
-              <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden mb-4">
+              <div className="w-24 h-24 rounded-full border-4 border-slate-900 shadow-2xl overflow-hidden mb-4 relative">
                 <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-4 border-slate-900 rounded-full"></div>
               </div>
-              <h2 className="text-xl font-bold text-slate-800">{user.name}</h2>
-              <p className="text-slate-500 text-sm mb-4">{user.role}</p>
+              <h2 className="text-xl font-bold text-white">{user.name}</h2>
+              <p className="text-slate-400 text-sm mb-6 flex items-center gap-1">
+                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                 {user.role}
+              </p>
               
               <div className="w-full space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
                   <Mail size={18} className="text-slate-400" />
-                  <span className="text-sm text-slate-600 truncate">{user.email}</span>
+                  <span className="text-sm text-slate-300 truncate">{user.email}</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <Shield size={18} className="text-emerald-500" />
-                  <span className="text-sm text-slate-600">Conta Verificada</span>
+                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                  <Shield size={18} className="text-emerald-400" />
+                  <span className="text-sm text-slate-300">Conta Verificada</span>
                 </div>
               </div>
 
-              <button className="mt-6 w-full py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
-                Editar Perfil
-              </button>
+              <div className="w-full grid grid-cols-2 gap-3 mt-6">
+                <button className="py-2.5 border border-white/10 rounded-xl text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white transition-colors bg-white/5">
+                  Editar
+                </button>
+                <button 
+                  onClick={logout}
+                  className="py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <LogOut size={14} /> Sair
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Card de Aparência (Skin) */}
-          <div className="glass-card p-6 rounded-3xl border border-slate-200">
+          <div className="glass-card p-6 rounded-3xl border border-white/10">
             <div className="flex items-center gap-2 mb-4">
-              <Palette className="text-blue-600" size={20} />
-              <h3 className="text-lg font-bold text-slate-800">Aparência do App</h3>
+              <Palette className="text-blue-400" size={20} />
+              <h3 className="text-lg font-bold text-white">Aparência do App</h3>
             </div>
-            <p className="text-sm text-slate-500 mb-6">Personalize a cor predominante da interface.</p>
+            <p className="text-sm text-slate-400 mb-6">Personalize a cor predominante da interface.</p>
             
             <div className="grid grid-cols-5 gap-2">
               {themes.map((t) => (
@@ -125,8 +140,8 @@ const Settings: React.FC = () => {
                   key={t.name}
                   onClick={() => setThemeHue(t.hue)}
                   className={`
-                    w-full aspect-square rounded-xl ${t.color} shadow-sm transition-transform hover:scale-110 flex items-center justify-center
-                    ${themeHue === t.hue ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : ''}
+                    w-full aspect-square rounded-xl ${t.color} shadow-lg transition-transform hover:scale-110 flex items-center justify-center relative
+                    ${themeHue === t.hue ? 'ring-2 ring-offset-2 ring-offset-slate-900 ring-white scale-110' : 'opacity-80 hover:opacity-100'}
                   `}
                   title={t.name}
                 >
@@ -137,13 +152,13 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Coluna Direita: Planos */}
+        {/* Coluna Direita: Planos e Legal */}
         <div className="xl:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              <CreditCard className="text-slate-800" /> Planos & Assinatura
+            <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+              <CreditCard className="text-slate-400" /> Planos & Assinatura
             </h3>
-            <span className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+            <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 font-mono shadow-[0_0_10px_rgba(16,185,129,0.2)]">
               Renovação em: 15/06/2024
             </span>
           </div>
@@ -159,12 +174,12 @@ const Settings: React.FC = () => {
                   className={`
                     relative p-6 rounded-2xl border transition-all duration-300 flex flex-col
                     ${isCurrent 
-                      ? 'bg-white border-blue-500 shadow-xl shadow-blue-500/10 scale-[1.02] z-10' 
-                      : 'bg-slate-50 border-slate-200 hover:bg-white hover:border-slate-300'}
+                      ? 'bg-blue-600/10 border-blue-500/50 shadow-[0_0_30px_rgba(37,99,235,0.15)] z-10' 
+                      : 'bg-slate-900/40 border-white/5 hover:bg-white/5 hover:border-white/10'}
                   `}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-blue-500/40 border border-blue-400">
                       Mais Popular
                     </div>
                   )}
@@ -173,13 +188,13 @@ const Settings: React.FC = () => {
                     <Icon size={24} />
                   </div>
 
-                  <h4 className="text-lg font-bold text-slate-800">{plan.name}</h4>
-                  <p className="text-2xl font-bold text-slate-700 my-2">{plan.price}</p>
+                  <h4 className="text-lg font-bold text-white">{plan.name}</h4>
+                  <p className="text-2xl font-bold text-slate-200 my-2">{plan.price}</p>
 
                   <ul className="space-y-3 mt-4 mb-8 flex-1">
                     {plan.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
-                        <CheckCircle2 size={16} className={`shrink-0 mt-0.5 ${isCurrent ? 'text-blue-500' : 'text-slate-400'}`} />
+                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-400">
+                        <CheckCircle2 size={16} className={`shrink-0 mt-0.5 ${isCurrent ? 'text-blue-400' : 'text-slate-600'}`} />
                         {feat}
                       </li>
                     ))}
@@ -189,10 +204,10 @@ const Settings: React.FC = () => {
                     onClick={() => setCurrentPlan(plan.id)}
                     disabled={isCurrent}
                     className={`
-                      w-full py-2.5 rounded-xl font-bold text-sm transition-all
+                      w-full py-3 rounded-xl font-bold text-sm transition-all
                       ${isCurrent 
-                        ? 'bg-blue-50 text-blue-600 border border-blue-100 cursor-default' 
-                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-800 hover:text-white hover:border-slate-800'}
+                        ? 'bg-blue-500 text-white cursor-default shadow-lg shadow-blue-500/20' 
+                        : 'bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white hover:border-white/20'}
                     `}
                   >
                     {isCurrent ? 'Plano Atual' : 'Selecionar'}
@@ -202,17 +217,42 @@ const Settings: React.FC = () => {
             })}
           </div>
 
-          {/* Banner de Info */}
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 text-white flex items-start gap-4 shadow-lg">
-            <div className="p-3 bg-white/10 rounded-xl">
-              <AlertCircle size={24} className="text-blue-300" />
-            </div>
-            <div>
-              <h4 className="font-bold text-lg mb-1">Precisa de mais poder?</h4>
-              <p className="text-slate-300 text-sm max-w-xl leading-relaxed">
-                Para integrações via API dedicada, volumes acima de 10.000 consultas/mês ou acesso a dados brutos do Data Lake, entre em contato com nosso time Enterprise.
-              </p>
-            </div>
+          {/* Seção de Compliance e Legal (Novo para MVP) */}
+          <div className="mt-8 pt-8 border-t border-white/5">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <Scale className="text-slate-400" /> Compliance & Privacidade
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-900/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+                      <div className="flex items-center gap-3 mb-3">
+                          <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><FileText size={18} /></div>
+                          <h4 className="font-bold text-slate-200 text-sm">Termos de Uso</h4>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          Ao utilizar a plataforma, você concorda que os dados são para fins de análise de risco e não devem ser utilizados para propósitos ilegais ou discriminatórios.
+                      </p>
+                      <button className="text-xs font-bold text-blue-400 hover:text-white transition-colors uppercase tracking-wide">Ler Termos Completos</button>
+                  </div>
+
+                  <div className="bg-slate-900/40 p-5 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-colors">
+                      <div className="flex items-center gap-3 mb-3">
+                          <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><ShieldCheck size={18} /></div>
+                          <h4 className="font-bold text-slate-200 text-sm">LGPD & Proteção de Dados</h4>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          O KWcar atua em conformidade com a Lei nº 13.709/2018. Todos os dados consultados são provenientes de fontes públicas ou autorizadas.
+                      </p>
+                      <button className="text-xs font-bold text-emerald-400 hover:text-white transition-colors uppercase tracking-wide">Política de Privacidade</button>
+                  </div>
+              </div>
+
+              <div className="mt-4 p-4 rounded-xl bg-slate-950 border border-white/5 flex gap-4 items-center">
+                  <AlertCircle size={24} className="text-slate-600 shrink-0" />
+                  <p className="text-xs text-slate-500">
+                      <strong>Disclaimer:</strong> O KWcar Intelligence é uma ferramenta agregadora de dados. Não nos responsabilizamos pela veracidade absoluta das informações providas por APIs de terceiros (Detran/Receita Federal).
+                  </p>
+              </div>
           </div>
 
         </div>

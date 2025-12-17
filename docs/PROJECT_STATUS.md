@@ -1,52 +1,48 @@
 
 # Estado Atual do Projeto (Project Status)
 
-**Data da Última Atualização:** 24/05/2024
-**Versão:** 1.2.0 (Stable Beta)
+**Versão Atual:** 2.5.0 (Release Candidate)
+**Última Atualização:** Atualizado recentemente
 
 ## ✅ Módulos Concluídos
 
-### 1. Core & UI
-- [x] Layout Responsivo (Glassmorphism).
-- [x] Dashboard Analítico com gráficos Recharts.
-- [x] Autenticação (Login/Logout com persistência de sessão).
-- [x] Proteção de Rotas.
+### 1. Core & UI/UX
+- [x] Layout Responsivo (Glassmorphism HUD).
+- [x] **[Novo]** Sistema de Notificações Global (Toast Context).
+- [x] **[Novo]** Página de Configurações com Compliance/LGPD.
+- [x] Autenticação (Login/Logout com persistência).
 
-### 2. Módulo de Consultas (PersonQuery / VehicleQuery)
+### 2. Módulo de Consultas
 - [x] Busca CPF/CNPJ híbrida (BrasilAPI + Infosimples).
 - [x] Busca Veicular híbrida (FIPE + Infosimples + IA).
-- [x] Lógica de Fallback (Se API A falha, tenta API B).
-- [x] Visualização de Dossiê (Score, Bens, Histórico).
+- [x] Lógica de Fallback de APIs.
+- [x] Favoritos e Histórico (Persistência Local).
 
-### 3. Catálogo de Serviços v2 (Services.tsx)
-- [x] Mapeamento de 300+ endpoints da Infosimples.
-- [x] Execução Genérica Dinâmica.
-- [x] Categorização Automática (Detran, Tribunais, etc.).
-- [x] **Correção do Erro 606:** Implementação de Aliasing de Parâmetros (`cpf` + `documento`, `processo` + `numero`).
-- [x] Suporte a Inputs Secundários (Data Nasc., Renavam).
+### 3. Comparativo de Veículos
+- [x] Renomeado de "Battle Mode" para "Comparativo".
+- [x] Integração com Gemini AI para análise técnica.
+- [x] UI de Veredito e Pontos Fortes/Fracos.
 
 ### 4. Inteligência Artificial
-- [x] Geração de Perfil Simulado (Gemini Flash).
-- [x] Scanner Visual (Gemini Pro Vision) para análise de danos/documentos.
+- [x] Geração de Perfil Simulado.
+- [x] Scanner Visual (Vision AI) com detecção automática de placa.
+- [x] **[Novo]** AI Assistant com Function Calling (Navegação e Consulta via Chat).
 
-### 5. Utilitários
-- [x] Busca CEP, DDD, Bancos e Taxas (Selic/CDI).
+### 5. Catálogo de Serviços
+- [x] Mapeamento de 300+ endpoints da Infosimples.
+- [x] Execução Genérica com parâmetros dinâmicos.
 
-## 🚧 Em Desenvolvimento / Limitações Conhecidas
+## 🚧 Melhorias em Andamento
 
-1.  **Proxy CORS:**
-    - O sistema depende de um proxy público (`corsproxy.io`). Para produção, é **obrigatório** criar um backend próprio para intermediar as chamadas e proteger o Token.
+1.  **Refinamento do Prompt IA:**
+    - Ajustar a temperatura do Gemini para respostas mais factuais no modo Comparativo.
 
-2.  **API Denatran:**
-    - Atualmente operando em modo "Simulação/IA" devido à impossibilidade técnica de usar certificados A1 (mTLS) diretamente no navegador.
+2.  **Tratamento de Erros:**
+    - Melhorar mensagens de erro quando o Token da Infosimples expira.
 
-3.  **Persistência:**
-    - O histórico de consultas não é salvo em banco de dados (apenas em memória/estado React).
+## 📅 Roadmap Futuro (v3.0)
 
-## 📅 Roadmap Futuro
-
-- [ ] **Backend Node.js:** Criar servidor Express/NestJS para remover a dependência do proxy público.
-- [ ] **Banco de Dados:** Implementar Supabase ou Firebase para salvar histórico de consultas e usuários.
-- [ ] **Exportação PDF:** Gerar relatórios em PDF dos dossiês consultados.
-- [ ] **Integração Pagamentos:** Gateway para cobrar por consulta (Stripe/MercadoPago).
-- [ ] **Webhooks:** Notificar usuário quando um monitoramento (ex: processo novo) for ativado.
+- [ ] **Backend Real:** Substituir o Proxy CORS por um servidor Node.js/NestJS.
+- [ ] **Banco de Dados:** Migrar de LocalStorage para PostgreSQL/Supabase.
+- [ ] **PDF Export:** Gerar relatórios oficiais em PDF assinados.
+- [ ] **Integração Whatsapp:** Enviar dossiê diretamente para o WhatsApp do cliente via API.
